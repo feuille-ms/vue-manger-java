@@ -6,6 +6,7 @@ import com.example.security.LoginFailureHandler;
 import com.example.security.LoginSuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -54,11 +55,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated()
 
                 //异常处理
-                .and()
-                .addFilterBefore(captchaFilter, UsernamePasswordAuthenticationFilter.class)
 
                 //配置自定义过滤器
-
+                .and()
+                .addFilterBefore(captchaFilter, UsernamePasswordAuthenticationFilter.class)
         ;
+    }
+
+    //测试
+    @Override
+    protected  void configure (AuthenticationManagerBuilder auth) throws Exception {
+        auth.inMemoryAuthentication()
+                .withUser("root")
+                .password("{noop}admin")
+                .roles("ADMIN");
     }
 }
