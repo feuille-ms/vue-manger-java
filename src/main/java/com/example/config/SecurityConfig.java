@@ -1,17 +1,30 @@
 package com.example.config;
 
 
+import com.example.security.CaptchaFilter;
+import com.example.security.LoginFailureHandler;
+import com.example.security.LoginSuccessHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    @Autowired
+    LoginFailureHandler loginFailureHandler;
+
+    @Autowired
+    LoginSuccessHandler loginSuccessHandler;
+
+    @Autowired
+    CaptchaFilter captchaFilter;
 
     //白名单
     private static final String[] URL_WHITELIST = {
@@ -25,6 +38,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.cors().and().csrf().disable()
                 //登录配置
                 .formLogin()
+//                    .loginProcessingUrl("/login")
+                .successHandler(loginSuccessHandler)
+                .failureHandler(loginFailureHandler)
 
                 //禁用session
                 .and()
@@ -38,6 +54,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated()
 
                 //异常处理
+                .and()
+                .addFilterBefore(captchaFilter, UsernamePasswordAuthenticationFilter.class)
 
                 //配置自定义过滤器
 
