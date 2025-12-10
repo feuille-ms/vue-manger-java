@@ -47,6 +47,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     UserDetailServiceImpl userDetailService;
 
+    @Autowired
+    JwtLogoutSuccessHandler jwtLogoutSuccessHandler;
+
     //白名单
     private static final String[] URL_WHITELIST = {
             "/login",
@@ -62,6 +65,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 //                    .loginProcessingUrl("/login")
                 .successHandler(loginSuccessHandler)
                 .failureHandler(loginFailureHandler)
+
+                //退出配置
+                .and()
+                .logout()
+                .logoutSuccessHandler(jwtLogoutSuccessHandler)
 
                 //禁用session
                 .and()

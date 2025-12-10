@@ -9,6 +9,7 @@ import com.example.service.SysMenuService;
 import com.example.service.SysRoleService;
 import com.example.service.SysUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Autowired
     SysMenuService sysMenuService;
 
+    @Autowired
+    RedisUtil redisUtil;
+
 
     @Override
     public SysUser getByUsername(String username) {
@@ -41,24 +45,55 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Override
     public String getUserAuthorityInfo(Long userId) {
+        SysUser sysUser = sysUserMapper.selectById(userId);
+
         String authority = "";
 
-        List<SysRole> roles = sysRoleService.list(new QueryWrapper<SysRole>()
-                .inSql("id", "select role_id from sys_user_role where user_id = " + userId));
+        if(redisUtil.hasKey("GranteAuthority:" + sysUser.getUsername())) {
+            authority = (String) redisUtil.get("GranteAuthority:" + sysUser.getUsername());
+        }else {
+            List<SysRole> roles = sysRoleService.list(new QueryWrapper<SysRole>()
+                    .inSql("id", "select role_id from sys_user_role where user_id = " + userId));
 
-        if(roles.size() > 0) {
-            String roleCode = roles.stream().map(r->"ROLE_" + r.getCode())
-                    .collect(Collectors.joining(","));
-            authority = roleCode.concat(",");
+            if(roles.size() > 0) {
+                String roleCode = roles.stream().map(r->"ROLE_" + r.getCode())
+                        .collect(Collectors.joining(","));
+                authority = roleCode.concat(",");
+            }
+
+            List<Long> menuId = sysUserMapper.getNavMenuIds(userId);
+            if(menuId.size() > 0) {
+                List<SysMenu> menus = sysMenuService.listByIds(menuId);
+                String menuPersms = menus.stream().map(m->m.getPerms())
+                        .collect(Collectors.joining(","));
+                authority = authority.concat(menuPersms);
+            }
+            redisUtil.set("GranteAuthority:" + sysUser.getUsername(), authority, 60*60);
         }
 
-        List<Long> menuId = sysUserMapper.getNavMenuIds(userId);
-        if(menuId.size() > 0) {
-            List<SysMenu> menus = sysMenuService.listByIds(menuId);
-            String menuPersms = menus.stream().map(m->m.getPerms())
-                    .collect(Collectors.joining(","));
-            authority = authority.concat(menuPersms);
-        }
         return authority;
+    }
+
+    @Override
+    public void clearUserAuthorityInfo(String username) {
+        redisUtil.del("GranteAuthority:" + username);
+    }
+
+    @Override
+    public void clearUserAuthorityInfoByRoleId(Long roleId) {
+        List<SysUser> sysUsers = this.list(new QueryWrapper<SysUser>()
+                .inSql("id", "select user_id from sys_user_role where role_id = " + roleId));
+        sysUsers.forEach(u->{
+            this.clearUserAuthorityInfo(u.getUsername());
+        });
+    }
+
+    @Override
+    public void clearUserAuthorityInfoByMenuId(Long menuId) {
+        List<SysUser> sysUsers = sysUserMapper.listByMenuId(menuId);
+
+        sysUsers.forEach(u->{
+            this.clearUserAuthorityInfo(u.getUsername());
+        });
     }
 }
