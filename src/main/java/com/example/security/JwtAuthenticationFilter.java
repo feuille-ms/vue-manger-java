@@ -1,6 +1,9 @@
 package com.example.security;
 
 import cn.hutool.core.util.StrUtil;
+import com.example.entity.SysUser;
+import com.example.service.SysUserService;
+import com.example.service.impl.UserDetailServiceImpl;
 import com.example.util.JwtUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -8,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import javax.servlet.FilterChain;
@@ -19,6 +23,12 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
     @Autowired
     JwtUtils jwtUtils;
+
+    @Autowired
+    UserDetailServiceImpl userDetailService;
+
+    @Autowired
+    SysUserService sysUserService;
 
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager) {
         super(authenticationManager);
@@ -39,9 +49,16 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
             throw new JwtException("token 异常");
         }
 
+        if(jwtUtils.isTokenExpired(claim)) {
+            throw new JwtException("token 已过期");
+        }
+
         String username = claim.getSubject();
+
+        SysUser sysUser = sysUserService.getByUsername(username);
+
         UsernamePasswordAuthenticationToken token =
-                new UsernamePasswordAuthenticationToken(username, null, null);
+                new UsernamePasswordAuthenticationToken(username, null, userDetailService.getUserAuthority(sysUser.getId()));
         SecurityContextHolder.getContext().setAuthentication(token);
         chain.doFilter(request, response);
     }

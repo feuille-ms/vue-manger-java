@@ -21,6 +21,8 @@ public class JwtUtils {
     //生成jwt
     public String generateToken(String username) {
         System.out.println("generateToken...");
+        System.out.println("SECRET=" + secret);
+
         Date nowDate = new Date();
         Date expireDate = new Date(nowDate.getTime() + expire * 1000);
 
