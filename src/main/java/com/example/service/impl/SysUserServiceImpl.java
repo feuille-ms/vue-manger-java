@@ -49,8 +49,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         String authority = "";
 
-        if(redisUtil.hasKey("GranteAuthority:" + sysUser.getUsername())) {
-            authority = (String) redisUtil.get("GranteAuthority:" + sysUser.getUsername());
+        if(redisUtil.hasKey("GrantedAuthority:" + sysUser.getUsername())) {
+            authority = (String) redisUtil.get("GrantedAuthority:" + sysUser.getUsername());
         }else {
             List<SysRole> roles = sysRoleService.list(new QueryWrapper<SysRole>()
                     .inSql("id", "select role_id from sys_user_role where user_id = " + userId));
@@ -68,7 +68,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                         .collect(Collectors.joining(","));
                 authority = authority.concat(menuPersms);
             }
-            redisUtil.set("GranteAuthority:" + sysUser.getUsername(), authority, 60*60);
+            redisUtil.set("GrantedAuthority:" + sysUser.getUsername(), authority, 60*60);
         }
 
         return authority;
@@ -76,7 +76,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Override
     public void clearUserAuthorityInfo(String username) {
-        redisUtil.del("GranteAuthority:" + username);
+        redisUtil.del("GrantedAuthority:" + username);
     }
 
     @Override

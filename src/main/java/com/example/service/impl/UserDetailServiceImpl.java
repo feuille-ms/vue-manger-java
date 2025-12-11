@@ -30,6 +30,11 @@ public class UserDetailServiceImpl implements UserDetailsService {
 
     public List<GrantedAuthority> getUserAuthority(Long userId) {
         String authority = sysUserService.getUserAuthorityInfo(userId);
+
+        if (authority == null) {
+            authority = "";
+        }
+
         return AuthorityUtils.commaSeparatedStringToAuthorityList(authority);
     }
 

@@ -2,7 +2,9 @@ package com.example.config;
 
 
 import com.example.security.*;
+import com.example.service.SysUserService;
 import com.example.service.impl.UserDetailServiceImpl;
+import com.example.util.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,15 +31,28 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     CaptchaFilter captchaFilter;
 
     @Autowired
+    private JwtUtils jwtUtils;
+
+    @Autowired
     JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
+    @Autowired
+    private SysUserService sysUserService;
 
     @Autowired
     JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
-    JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
-        return new JwtAuthenticationFilter(authenticationManager());
+    public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
+        // 把所有依赖注入 Filter
+        return new JwtAuthenticationFilter(
+                authenticationManager(),
+                jwtUtils,
+                userDetailService,
+                sysUserService
+        );
     }
+
 
     @Bean
     BCryptPasswordEncoder bCryptPasswordEncoder() {
