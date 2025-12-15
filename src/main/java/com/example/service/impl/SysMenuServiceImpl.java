@@ -1,6 +1,7 @@
 package com.example.service.impl;
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.common.dto.SysMenuDto;
 import com.example.entity.SysMenu;
 import com.example.entity.SysUser;
@@ -14,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -77,5 +79,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         List<SysMenu> menuTree = buildTreeMenu(menus);
         //实体转换成DTO
         return convert(menuTree);
+    }
+
+    @Override
+    public List<SysMenu> tree() {
+        List<SysMenu> menus = this.list(new QueryWrapper<SysMenu>().orderByAsc("orderNum"));
+        return buildTreeMenu(menus);
     }
 }
