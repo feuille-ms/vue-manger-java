@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.common.dto.PassDto;
 import com.example.common.lang.Const;
 import com.example.common.lang.Result;
 import com.example.entity.SysRole;
@@ -16,10 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.PriorityQueue;
 
 /**
  * <p>
@@ -122,6 +125,22 @@ public class SysUserController extends BaseController {
     public Result repass(@RequestBody Long userId) {
         SysUser sysUser = sysUserService.getById(userId);
         sysUser.setPassword(passwordEncoder.encode(Const.DEFAULT_PASSWORD));
+        sysUser.setUpdated(LocalDateTime.now());
+
+        sysUserService.updateById(sysUser);
+        return Result.succ("");
+    }
+
+    @PostMapping("/updatePass")
+    public Result updatePass(@Valid @RequestBody PassDto passDto, Principal principal) {
+        SysUser sysUser = sysUserService.getByUsername(principal.getName());
+
+        boolean matches = passwordEncoder.matches(passDto.getCurrentPass(), sysUser.getPassword());
+        if (!matches) {
+            return Result.fail("旧密码不正确");
+        }
+
+        sysUser.setPassword(passwordEncoder.encode(passDto.getPassword()));
         sysUser.setUpdated(LocalDateTime.now());
 
         sysUserService.updateById(sysUser);
