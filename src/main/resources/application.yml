@@ -16,5 +16,5 @@ mybatis-plus:
 vuemanager:
   jwt:
     header: Authorization
-    expire: 604800
+    expire: 7200
     secret: "fi8n3439n439n43ld9ne9343fdfet49h"
