@@ -2,6 +2,7 @@ package com.example.controller;
 
 import cn.hutool.core.map.MapUtil;
 import com.example.common.lang.Const;
+import com.example.entity.SysUser;
 import com.google.code.kaptcha.Producer;
 import com.example.common.lang.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.Principal;
 import java.sql.SQLOutput;
 import java.util.UUID;
 
@@ -40,5 +42,18 @@ public class AuthController extends BaseController{
         String base64Img = str + encoder.encode(outputStream.toByteArray());
         redisUtil.hset(Const.CAPTCHA_KEY,key,code,120);
         return Result.succ(MapUtil.builder().put("token",key).put("captchaImg",base64Img).build());
+    }
+
+    @GetMapping("/sys/userInfo")
+    public Result userInfo(Principal principal) {
+        SysUser sysUser = sysUserService.getByUsername(principal.getName());
+
+        return Result.succ(MapUtil.builder()
+                .put("id", sysUser.getId())
+                .put("username", sysUser.getUsername())
+                .put("avatar", sysUser.getAvatar())
+                .put("created", sysUser.getCreated())
+                .map()
+        );
     }
 }
